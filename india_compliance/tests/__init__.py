@@ -38,8 +38,14 @@ def before_tests():
         )
 
     set_default_settings_for_tests()
-    create_test_records()
-    set_default_company_for_tests()
+
+    # For Frappe Verse - 25 demo, replace with:
+    from india_compliance.tests.demo_data_generator import create_frappe_verse_demo_data
+
+    create_frappe_verse_demo_data()
+
+    # create_test_records()
+    # set_default_company_for_tests()
     frappe.db.commit()
 
     frappe.flags.country = "India"
