@@ -16,7 +16,6 @@ from datetime import timedelta
 import frappe
 from frappe.tests.utils import make_test_objects
 from frappe.utils import add_months, getdate
-from frappe.utils.nestedset import get_root_of
 from erpnext.accounts.utils import get_fiscal_year
 
 from india_compliance.gst_india.constants import INDIAN_STATES
@@ -38,40 +37,80 @@ def create_frappe_verse_demo_data():
     # Companies with different GST categories
     COMPANIES_CONFIG = [
         {
-            "name": "TechnoSpark Electronics Pvt Ltd",
             "abbr": "TSE",
+            "company_name": "TechnoSpark Electronics Pvt Ltd",
+            "name": "TechnoSpark Electronics Pvt Ltd",
+            "country": "India",
+            "default_currency": "INR",
+            "domain": "Manufacturing",
+            "chart_of_accounts": "Standard",
+            "enable_perpetual_inventory": 0,
             "gstin": "24ABGFR8461H1ZY",
             "gst_category": "Registered Regular",
             "is_default": True,
         },
         {
-            "name": "InnovateTech Solutions Ltd",
             "abbr": "ITS",
+            "name": "InnovateTech Solutions Ltd",
+            "company_name": "InnovateTech Solutions Ltd",
+            "country": "India",
+            "default_currency": "INR",
+            "domain": "Manufacturing",
+            "chart_of_accounts": "Standard",
+            "enable_perpetual_inventory": 0,
             "gstin": "24AAQCA8719H1ZC",
             "gst_category": "Registered Composition",
             "is_default": False,
         },
         {
-            "name": "Digital Matrix Enterprises",
             "abbr": "DME",
+            "name": "Digital Matrix Enterprises",
+            "company_name": "Digital Matrix Enterprises",
             "gstin": "",
+            "country": "India",
+            "default_currency": "INR",
+            "domain": "Manufacturing",
+            "chart_of_accounts": "Standard",
+            "enable_perpetual_inventory": 0,
             "gst_category": "Unregistered",
             "is_default": False,
         },
-        # {
-        #     "name": "Smart Systems SEZ Unit",
-        #     "abbr": "SSS",
-        #     "gstin": "29HIJKL5678N4AB",
-        #     "gst_category": "SEZ",
-        #     "is_default": False
-        # },
-        # {
-        #     "name": "Global Tech Exports Ltd",
-        #     "abbr": "GTE",
-        #     "gstin": "33MNOPQ9012P5CD",
-        #     "gst_category": "Overseas",
-        #     "is_default": False
-        # }
+        {
+            "abbr": "STI",
+            "company_name": "SoftTech Innovations",
+            "name": "SoftTech Innovations",
+            "country": "India",
+            "default_currency": "INR",
+            "doctype": "Company",
+            "domain": "Manufacturing",
+            "chart_of_accounts": "Standard",
+            "enable_perpetual_inventory": 0,
+            "gstin": "24AAQCA8719H1ZC",
+            "gst_category": "Registered Regular",
+        },
+        {
+            "abbr": "CWS",
+            "company_name": "Chhayanwala Solutions",
+            "name": "Chhayanwala Solutions",
+            "country": "India",
+            "default_currency": "INR",
+            "doctype": "Company",
+            "domain": "Manufacturing",
+            "chart_of_accounts": "Standard",
+            "enable_perpetual_inventory": 0,
+            "gst_category": "Unregistered",
+        },
+        {
+            "abbr": "MJC",
+            "company_name": "Mark Johnson Corp",
+            "name": "Mark Johnson Corp",
+            "country": "United States",
+            "default_currency": "USD",
+            "doctype": "Company",
+            "domain": "Manufacturing",
+            "chart_of_accounts": "Standard",
+            "enable_perpetual_inventory": 0,
+        },
     ]
 
     DEFAULT_COMPANY = "TechnoSpark Electronics Pvt Ltd"
@@ -92,13 +131,11 @@ def create_frappe_verse_demo_data():
     print("🏭 Creating companies with different GST categories...")
     companies = []
     for company_config in COMPANIES_CONFIG:
-        _create_company(
-            company_config["name"],
-            company_config["abbr"],
-            company_config["gstin"],
-            company_config["gst_category"],
-        )
+        _create_company(**company_config)
         companies.append(company_config["name"])
+
+    print("🏢 Setting default company...")
+    _set_default_company(DEFAULT_COMPANY)
 
     # creating HSN
     print("📚 Creating HSN codes...")
@@ -137,15 +174,13 @@ def create_frappe_verse_demo_data():
         future_months=FUTURE_MONTHS,
     )
 
-    # Set default company
-    _set_default_company(DEFAULT_COMPANY)
-
     print("✅ Demo data creation completed successfully!")
     print("📊 Summary:")
     print(f"   - Companies: {len(companies)}")
     for i, company in enumerate(companies):
-        gst_cat = COMPANIES_CONFIG[i]["gst_category"]
+        gst_cat = COMPANIES_CONFIG[i].get("gst_category")
         print(f"     • {company} ({gst_cat})")
+    print(f"  - Default Company: {DEFAULT_COMPANY}")
     print(f"   - Items: {len(items)}")
     print(f"   - Customers: {len(customers)}")
     print(f"   - Suppliers: {len(suppliers)}")
@@ -195,25 +230,12 @@ def _clear_demo_data():
                     pass  # Ignore errors during cleanup
 
 
-def _create_company(company_name, abbr, gstin, gst_category):
+def _create_company(**kwargs):
     """Create demo company with specified GST category"""
-    if frappe.db.exists("Company", company_name):
+    if frappe.db.exists("Company", kwargs.get("company_name")):
         return
 
-    company = frappe.get_doc(
-        {
-            "doctype": "Company",
-            "company_name": company_name,
-            "abbr": abbr,
-            "country": "India",
-            "default_currency": "INR",
-            "domain": "Manufacturing",
-            "chart_of_accounts": "Standard",
-            "enable_perpetual_inventory": 1,
-            "gstin": gstin,
-            "gst_category": gst_category,
-        }
-    )
+    company = frappe.get_doc({"doctype": "Company", **kwargs})
     company.insert(ignore_permissions=True)
 
     # Add to fiscal year
@@ -222,7 +244,8 @@ def _create_company(company_name, abbr, gstin, gst_category):
         doc = frappe.get_doc("Fiscal Year", fy.name)
         fy_companies = [row.company for row in doc.companies]
 
-        if company_name not in fy_companies:
+        company_name = kwargs.get("company_name")
+        if company_name and company_name not in fy_companies:
             doc.append("companies", {"company": company_name})
             doc.save(ignore_permissions=True)
     except Exception:
@@ -251,14 +274,14 @@ def _create_items():
         ("Printer Inkjet Canon", "85279912", "Nos", 8000),
         ("Scanner Flatbed", "85279919", "Nos", 6000),
         ("Router WiFi", "85279990", "Nos", 2500),
-        ("Ethernet Cable 5m", "85281211", "Mtr", 200),
+        ("Ethernet Cable 5m", "85281211", "Meter", 200),
         ("Speakers Bluetooth", "85281212", "Nos", 3000),
         ("Smart Watch", "85281213", "Nos", 8000),
     ]
 
     # Stationery items with valid 8-digit HSN codes
     stationery_items = [
-        ("A4 Copy Paper 500 Sheets", "481730", "Pack", 250),
+        ("A4 Copy Paper 500 Sheets", "481730", "Set", 250),
         ("Ballpoint Pen Blue", "481840", "Nos", 10),
         ("Ballpoint Pen Black", "481910", "Nos", 10),
         ("Gel Pen Set", "481920", "Set", 50),
@@ -706,24 +729,36 @@ def _get_party_state(party_name, party_type):
 
 def _set_default_company(company):
     """Set the created company as default"""
+    from erpnext.setup.doctype.company.company import get_name_with_abbr
+
     try:
+        # stock settings
+        frappe.db.set_value(
+            "Company",
+            company,
+            {
+                "enable_perpetual_inventory": 1,
+                "default_inventory_account": get_name_with_abbr(
+                    "Stock In Hand", company
+                ),
+                "stock_adjustment_account": get_name_with_abbr(
+                    "Stock Adjustment", company
+                ),
+                "stock_received_but_not_billed": get_name_with_abbr(
+                    "Stock Received But Not Billed", company
+                ),
+                "expenses_included_in_valuation": get_name_with_abbr(
+                    "Expenses Included In Valuation", company
+                ),
+            },
+        )
         # Set default company
         global_defaults = frappe.get_single("Global Defaults")
         global_defaults.default_company = company
         global_defaults.save(ignore_permissions=True)
 
-        # Set other defaults
-        for key in ("Customer Group", "Supplier Group", "Item Group", "Territory"):
-            frappe.db.set_default(frappe.scrub(key), get_root_of(key))
-
-        # Allow negative stock
-        frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 1)
-
-        # Enable sandbox mode
-        frappe.db.set_single_value("GST Settings", "sandbox_mode", 1)
-
     except Exception as e:
-        print(f"Warning: Could not set defaults: {str(e)}")
+        print(f"Warning: Could not set defaults Company: {str(e)}")
 
 
 if __name__ == "__main__":
