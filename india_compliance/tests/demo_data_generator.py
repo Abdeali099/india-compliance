@@ -18,17 +18,18 @@ from frappe.tests.utils import make_test_objects
 from frappe.utils import add_months, getdate
 from erpnext.accounts.utils import get_fiscal_year
 
-from india_compliance.gst_india.constants import INDIAN_STATES
+from india_compliance.gst_india.constants import INDIAN_STATES, STATE_PINCODE_MAPPING
+from india_compliance.gst_india.overrides.company import make_default_tax_templates
 from india_compliance.gst_india.setup.__init__ import create_hsn_codes
 from india_compliance.gst_india.utils.tests import (
     create_purchase_invoice,
     create_sales_invoice,
 )
 
-DEFAULT_COMPANY = "TechnoSpark Electronics Pvt Ltd"
+DEFAULT_COMPANY = "Resilient Tech"
 
 DEFAULT_COMPANY_CONFIG = {
-    "abbr": "TSE",
+    "abbr": "RT",
     "company_name": DEFAULT_COMPANY,
     "name": DEFAULT_COMPANY,
     "country": "India",
@@ -157,7 +158,7 @@ def create_frappe_verse_demo_data():
     print(f"📄 Creating {SALES_INVOICES_COUNT} sales invoices...")
     _create_sales_invoices(
         company=DEFAULT_COMPANY,
-        customers=customers,
+        customers=[customer["name"] for customer in customers],
         items=items,
         count=SALES_INVOICES_COUNT,
         past_months=PAST_MONTHS,
@@ -237,6 +238,14 @@ def _create_company(**kwargs):
 
     company = frappe.get_doc({"doctype": "Company", **kwargs})
     company.insert(ignore_permissions=True)
+    company_name = company.get("name")
+
+    # Create GST accounts and tax templates for the company
+    try:
+        make_default_tax_templates(company_name)
+        print(f"✅ Created GST accounts for {company_name}")
+    except Exception as e:
+        print(f"⚠️  Error creating GST accounts for {company_name}: {str(e)}")
 
     # Add to fiscal year
     try:
@@ -428,7 +437,7 @@ def _create_customers():
 
     make_test_objects("Customer", customers)
 
-    return [customer["customer_name"] for customer in customers]
+    return customers
 
 
 def _create_suppliers():
@@ -519,14 +528,11 @@ def _create_suppliers():
 
     make_test_objects("Supplier", suppliers)
 
-    return [supplier["supplier_name"] for supplier in suppliers]
+    return suppliers
 
 
 def _create_addresses(customers, suppliers, company):
     """Create addresses for all customers, suppliers, and company"""
-
-    # Indian states for address creation
-    states = list(INDIAN_STATES.keys())[:20]  # Use first 20 states
 
     addresses = []
 
@@ -537,63 +543,96 @@ def _create_addresses(customers, suppliers, company):
             "address_title": f"{company}-Billing",
             "address_type": "Billing",
             "address_line1": "Tech Park, Bandra Kurla Complex",
-            "city": "Mumbai",
-            "state": "Maharashtra",
-            "pincode": "400051",
+            "city": "Vadodara",
+            "state": "Gujarat",
+            "pincode": "390023",
             "country": "India",
-            "gstin": "27AAACI1681G1ZP",
+            "gstin": "24AUTPV8831F1ZZ",
             "gst_category": "Registered Regular",
             "is_primary_address": 1,
             "is_shipping_address": 1,
+            "is_your_company_address": 1,
             "links": [{"link_doctype": "Company", "link_name": company}],
         }
     )
+    india_state_map = {v: k for k, v in INDIAN_STATES.items()}
+
+    def get_state_from_gstin(gstin):
+        """Get state from GSTIN, with fallback to Gujarat if invalid"""
+        if not gstin or len(gstin) < 2:
+            return "Gujarat"
+
+        state_code = gstin[:2]
+        if state_code in india_state_map:
+            return india_state_map[state_code]
+        else:
+            # If invalid state code, default to Gujarat
+            return "Gujarat"
 
     # Customer addresses
     for i, customer in enumerate(customers):
-        state = states[i % len(states)]
-        # pincode = str(400000 + i * 10 + 1)
+        state = get_state_from_gstin(customer.get("gstin", ""))
 
+        pincode = pincode_generator(state)
         addresses.append(
             {
                 "doctype": "Address",
-                "address_title": f"{customer}-Billing",
+                "address_title": f"{customer.get('name')}-Billing",
                 "address_type": "Billing",
                 "address_line1": f"Plot {i + 1}, Sector {i % 10 + 1}",
                 "city": f"City {i + 1}",
                 "state": state,
-                # "pincode": pincode,
+                "pincode": pincode,
+                "gstin": customer.get("gstin", ""),
                 "country": "India",
                 "is_primary_address": 1,
                 "is_shipping_address": 1,
-                "links": [{"link_doctype": "Customer", "link_name": customer}],
+                "links": [
+                    {"link_doctype": "Customer", "link_name": customer.get("name")}
+                ],
             }
         )
 
     # Supplier addresses
     for i, supplier in enumerate(suppliers):
-        state = states[(i + 10) % len(states)]
-        # pincode = str(500000 + i * 10 + 1)
-
+        state = get_state_from_gstin(supplier.get("gstin", ""))
+        pincode = pincode_generator(state)
         addresses.append(
             {
                 "doctype": "Address",
-                "address_title": f"{supplier}-Billing",
+                "address_title": f"{supplier.get('name')}-Billing",
                 "address_type": "Billing",
                 "address_line1": f"Industrial Area {i + 1}, Zone {i % 5 + 1}",
                 "city": f"Industrial City {i + 1}",
                 "state": state,
-                # "pincode": pincode,
+                "pincode": pincode,
+                "gstin": supplier.get("gstin", ""),
                 "country": "India",
                 "is_primary_address": 1,
                 "is_shipping_address": 1,
-                "links": [{"link_doctype": "Supplier", "link_name": supplier}],
+                "links": [
+                    {"link_doctype": "Supplier", "link_name": supplier.get("name")}
+                ],
             }
         )
 
     make_test_objects("Address", addresses)
 
     return addresses
+
+
+def pincode_generator(state):
+    """Generate a random pincode for a given state"""
+    import random
+
+    if state in STATE_PINCODE_MAPPING:
+        pincode_range = STATE_PINCODE_MAPPING[state]
+        if isinstance(pincode_range[0], tuple):
+            pincode_range = pincode_range[0]
+
+        return str(pincode_range[0]) + str(random.randint(0, 999)).zfill(3)
+
+    return "110001"  # Default to Delhi if state not found
 
 
 def _create_sales_invoices(
@@ -676,7 +715,7 @@ def _create_purchase_invoices(
         try:
             invoice_data = {
                 "company": company,
-                "supplier": supplier,
+                "supplier": supplier.get("name"),
                 "posting_date": invoice_date,
                 "items": [],
             }
@@ -695,13 +734,14 @@ def _create_purchase_invoices(
                 )
 
             # Determine tax type based on supplier and company states
-            supplier_state = _get_party_state(supplier, "Supplier")
+            supplier_state = _get_party_state(supplier.get("name"), "Supplier")
             company_state = _get_party_state(company, "Company")
 
-            if supplier_state == company_state:
-                invoice_data["is_in_state"] = True
-            else:
-                invoice_data["is_out_state"] = True
+            if supplier.get("gst_category") not in ("Unregistered", "Overseas", ""):
+                if supplier_state == company_state:
+                    invoice_data["is_in_state"] = True
+                else:
+                    invoice_data["is_out_state"] = True
 
             create_purchase_invoice(**invoice_data)
 
