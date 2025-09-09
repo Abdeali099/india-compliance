@@ -25,6 +25,95 @@ from india_compliance.gst_india.utils.tests import (
     create_sales_invoice,
 )
 
+DEFAULT_COMPANY = "TechnoSpark Electronics Pvt Ltd"
+
+DEFAULT_COMPANY_CONFIG = {
+    "abbr": "TSE",
+    "company_name": DEFAULT_COMPANY,
+    "name": DEFAULT_COMPANY,
+    "country": "India",
+    "default_currency": "INR",
+    "domain": "Manufacturing",
+    "chart_of_accounts": "Standard",
+    "enable_perpetual_inventory": 0,
+    "gstin": "24ABGFR8461H1ZY",
+    "gst_category": "Registered Regular",
+}
+
+# Companies with different GST categories
+COMPANIES_CONFIG = [
+    DEFAULT_COMPANY_CONFIG,
+    {
+        "abbr": "ITS",
+        "name": "InnovateTech Solutions Ltd",
+        "company_name": "InnovateTech Solutions Ltd",
+        "country": "India",
+        "default_currency": "INR",
+        "domain": "Manufacturing",
+        "chart_of_accounts": "Standard",
+        "enable_perpetual_inventory": 0,
+        "gstin": "24AAQCA8719H1ZC",
+        "gst_category": "Registered Composition",
+    },
+    {
+        "abbr": "DME",
+        "name": "Digital Matrix Enterprises",
+        "company_name": "Digital Matrix Enterprises",
+        "gstin": "",
+        "country": "India",
+        "default_currency": "INR",
+        "domain": "Manufacturing",
+        "chart_of_accounts": "Standard",
+        "enable_perpetual_inventory": 0,
+        "gst_category": "Unregistered",
+    },
+    {
+        "abbr": "STI",
+        "company_name": "SoftTech Innovations",
+        "name": "SoftTech Innovations",
+        "country": "India",
+        "default_currency": "INR",
+        "doctype": "Company",
+        "domain": "Manufacturing",
+        "chart_of_accounts": "Standard",
+        "enable_perpetual_inventory": 0,
+        "gstin": "24AAQCA8719H1ZC",
+        "gst_category": "Registered Regular",
+    },
+    {
+        "abbr": "CWS",
+        "company_name": "Chhayanwala Solutions",
+        "name": "Chhayanwala Solutions",
+        "country": "India",
+        "default_currency": "INR",
+        "doctype": "Company",
+        "domain": "Manufacturing",
+        "chart_of_accounts": "Standard",
+        "enable_perpetual_inventory": 0,
+        "gst_category": "Unregistered",
+    },
+    {
+        "abbr": "MJC",
+        "company_name": "Mark Johnson Corp",
+        "name": "Mark Johnson Corp",
+        "country": "United States",
+        "default_currency": "USD",
+        "doctype": "Company",
+        "domain": "Manufacturing",
+        "chart_of_accounts": "Standard",
+        "enable_perpetual_inventory": 0,
+    },
+]
+
+
+# Invoice date ranges (in months from today)
+PAST_MONTHS = 6
+FUTURE_MONTHS = 3
+
+# Number of invoices to generate
+SALES_INVOICES_COUNT = 50
+PURCHASE_INVOICES_COUNT = 40
+
 
 def create_frappe_verse_demo_data():
     """
@@ -33,95 +122,6 @@ def create_frappe_verse_demo_data():
     CONFIGURATION - Modify these settings as needed:
     """
     # ==== CONFIGURATION SETTINGS ====
-
-    # Companies with different GST categories
-    COMPANIES_CONFIG = [
-        {
-            "abbr": "TSE",
-            "company_name": "TechnoSpark Electronics Pvt Ltd",
-            "name": "TechnoSpark Electronics Pvt Ltd",
-            "country": "India",
-            "default_currency": "INR",
-            "domain": "Manufacturing",
-            "chart_of_accounts": "Standard",
-            "enable_perpetual_inventory": 0,
-            "gstin": "24ABGFR8461H1ZY",
-            "gst_category": "Registered Regular",
-            "is_default": True,
-        },
-        {
-            "abbr": "ITS",
-            "name": "InnovateTech Solutions Ltd",
-            "company_name": "InnovateTech Solutions Ltd",
-            "country": "India",
-            "default_currency": "INR",
-            "domain": "Manufacturing",
-            "chart_of_accounts": "Standard",
-            "enable_perpetual_inventory": 0,
-            "gstin": "24AAQCA8719H1ZC",
-            "gst_category": "Registered Composition",
-            "is_default": False,
-        },
-        {
-            "abbr": "DME",
-            "name": "Digital Matrix Enterprises",
-            "company_name": "Digital Matrix Enterprises",
-            "gstin": "",
-            "country": "India",
-            "default_currency": "INR",
-            "domain": "Manufacturing",
-            "chart_of_accounts": "Standard",
-            "enable_perpetual_inventory": 0,
-            "gst_category": "Unregistered",
-            "is_default": False,
-        },
-        {
-            "abbr": "STI",
-            "company_name": "SoftTech Innovations",
-            "name": "SoftTech Innovations",
-            "country": "India",
-            "default_currency": "INR",
-            "doctype": "Company",
-            "domain": "Manufacturing",
-            "chart_of_accounts": "Standard",
-            "enable_perpetual_inventory": 0,
-            "gstin": "24AAQCA8719H1ZC",
-            "gst_category": "Registered Regular",
-        },
-        {
-            "abbr": "CWS",
-            "company_name": "Chhayanwala Solutions",
-            "name": "Chhayanwala Solutions",
-            "country": "India",
-            "default_currency": "INR",
-            "doctype": "Company",
-            "domain": "Manufacturing",
-            "chart_of_accounts": "Standard",
-            "enable_perpetual_inventory": 0,
-            "gst_category": "Unregistered",
-        },
-        {
-            "abbr": "MJC",
-            "company_name": "Mark Johnson Corp",
-            "name": "Mark Johnson Corp",
-            "country": "United States",
-            "default_currency": "USD",
-            "doctype": "Company",
-            "domain": "Manufacturing",
-            "chart_of_accounts": "Standard",
-            "enable_perpetual_inventory": 0,
-        },
-    ]
-
-    DEFAULT_COMPANY = "TechnoSpark Electronics Pvt Ltd"
-
-    # Invoice date ranges (in months from today)
-    PAST_MONTHS = 6
-    FUTURE_MONTHS = 3
-
-    # Number of invoices to generate
-    SALES_INVOICES_COUNT = 50
-    PURCHASE_INVOICES_COUNT = 40
 
     # Clear existing demo data
     print("🧹 Cleaning existing demo data...")
