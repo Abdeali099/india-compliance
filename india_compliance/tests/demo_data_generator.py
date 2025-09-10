@@ -525,58 +525,76 @@ def _create_company(**kwargs):
 def _create_items():
     """Create 30+ items with valid HSN codes (hardcoded)"""
 
-    # Electronics items with valid 8-digit HSN codes
+    # Electronics items with valid 8-digit HSN codes (18% GST)
     electronics_items = [
-        ("Smartphone Samsung Galaxy", "85271300", "Nos", 25000),
-        ("Laptop Dell Inspiron", "85271900", "Nos", 45000),
-        ("Desktop Computer HP", "85272100", "Nos", 35000),
-        ("Tablet iPad", "85272900", "Nos", 30000),
-        ("Bluetooth Headphones", "85273100", "Nos", 2500),
-        ("Wireless Mouse Logitech", "85273200", "Nos", 800),
-        ("Keyboard Mechanical", "85273900", "Nos", 1200),
-        ("Monitor LED 24 inch", "85279011", "Nos", 12000),
-        ("External Hard Drive 1TB", "85279012", "Nos", 3500),
-        ("USB Flash Drive 32GB", "85279019", "Nos", 500),
-        ("Power Bank 10000mAh", "85279090", "Nos", 1500),
-        ("Smartphone Charger", "85279100", "Nos", 300),
-        ("Laptop Bag", "85279200", "Nos", 800),
-        ("Webcam HD", "85279911", "Nos", 2000),
-        ("Printer Inkjet Canon", "85279912", "Nos", 8000),
-        ("Scanner Flatbed", "85279919", "Nos", 6000),
-        ("Router WiFi", "85279990", "Nos", 2500),
-        ("Ethernet Cable 5m", "85281211", "Meter", 200),
-        ("Speakers Bluetooth", "85281212", "Nos", 3000),
-        ("Smart Watch", "85281213", "Nos", 8000),
+        ("Smartphone Samsung Galaxy", "85271300", "Nos", 25000, "GST 18% - RT"),
+        ("Laptop Dell Inspiron", "85271900", "Nos", 45000, "GST 18% - RT"),
+        ("Desktop Computer HP", "85272100", "Nos", 35000, "GST 18% - RT"),
+        ("Tablet iPad", "85272900", "Nos", 30000, "GST 18% - RT"),
+        ("Bluetooth Headphones", "85273100", "Nos", 2500, "GST 18% - RT"),
+        ("Wireless Mouse Logitech", "85273200", "Nos", 800, "GST 18% - RT"),
+        ("Keyboard Mechanical", "85273900", "Nos", 1200, "GST 18% - RT"),
+        ("Monitor LED 24 inch", "85279011", "Nos", 12000, "GST 18% - RT"),
+        ("External Hard Drive 1TB", "85279012", "Nos", 3500, "GST 18% - RT"),
+        ("USB Flash Drive 32GB", "85279019", "Nos", 500, "GST 18% - RT"),
+        ("Power Bank 10000mAh", "85279090", "Nos", 1500, "GST 18% - RT"),
+        ("Smartphone Charger", "85279100", "Nos", 300, "GST 18% - RT"),
+        ("Laptop Bag", "85279200", "Nos", 800, "GST 18% - RT"),
+        ("Webcam HD", "85279911", "Nos", 2000, "GST 18% - RT"),
+        ("Printer Inkjet Canon", "85279912", "Nos", 8000, "GST 18% - RT"),
+        ("Scanner Flatbed", "85279919", "Nos", 6000, "GST 18% - RT"),
+        ("Router WiFi", "85279990", "Nos", 2500, "GST 18% - RT"),
+        ("Ethernet Cable 5m", "85281211", "Meter", 200, "GST 18% - RT"),
+        ("Speakers Bluetooth", "85281212", "Nos", 3000, "GST 18% - RT"),
+        ("Smart Watch", "85281213", "Nos", 8000, "GST 18% - RT"),
     ]
 
-    # Stationery items with valid 8-digit HSN codes
+    # Stationery items with valid 8-digit HSN codes (mix of GST rates)
     stationery_items = [
-        ("A4 Copy Paper 500 Sheets", "481730", "Set", 250),
-        ("Ballpoint Pen Blue", "481840", "Nos", 10),
-        ("Ballpoint Pen Black", "481910", "Nos", 10),
-        ("Gel Pen Set", "481920", "Set", 50),
-        ("Pencil HB", "481950", "Nos", 5),
-        ("Eraser White", "482010", "Nos", 8),
-        ("Ruler Plastic 30cm", "482090", "Nos", 15),
-        ("Stapler Desktop", "482110", "Nos", 120),
-        ("Staple Pins Box", "482190", "Box", 25),
-        ("Paper Clips Box", "482290", "Box", 30),
-        ("Highlighter Yellow", "482370", "Nos", 25),
-        ("Marker Permanent Black", "482390", "Nos", 35),
-        ("Notebook A4 200 Pages", "490110", "Nos", 80),
-        ("Spiral Notebook A5", "490210", "Nos", 45),
-        ("File Folder Plastic", "490290", "Nos", 35),
-        ("Binder Clips Set", "490300", "Set", 40),
-        ("Correction Fluid", "490590", "Nos", 20),
-        ("Glue Stick", "490599", "Nos", 18),
-        ("Scissors Office", "490700", "Nos", 65),
-        ("Calculator Desktop", "490900", "Nos", 450),
+        ("A4 Copy Paper 500 Sheets", "481730", "Set", 250, "GST 12% - RT"),
+        ("Ballpoint Pen Blue", "481840", "Nos", 10, "GST 12% - RT"),
+        ("Ballpoint Pen Black", "481910", "Nos", 10, "GST 12% - RT"),
+        ("Gel Pen Set", "481920", "Set", 50, "GST 12% - RT"),
+        ("Pencil HB", "481950", "Nos", 5, "GST 5% - RT"),  # Basic stationery - 5%
+        ("Eraser White", "482010", "Nos", 8, "GST 5% - RT"),  # Basic stationery - 5%
+        ("Ruler Plastic 30cm", "482090", "Nos", 15, "GST 12% - RT"),
+        ("Stapler Desktop", "482110", "Nos", 120, "GST 12% - RT"),
+        ("Staple Pins Box", "482190", "Box", 25, "GST 12% - RT"),
+        ("Paper Clips Box", "482290", "Box", 30, "GST 12% - RT"),
+        ("Highlighter Yellow", "482370", "Nos", 25, "GST 18% - RT"),  # Markers - 18%
+        (
+            "Marker Permanent Black",
+            "482390",
+            "Nos",
+            35,
+            "GST 18% - RT",
+        ),  # Markers - 18%
+        ("Notebook A4 200 Pages", "490110", "Nos", 80, "GST 12% - RT"),
+        ("Spiral Notebook A5", "490210", "Nos", 45, "GST 12% - RT"),
+        ("File Folder Plastic", "490290", "Nos", 35, "GST 12% - RT"),
+        ("Binder Clips Set", "490300", "Set", 40, "GST 12% - RT"),
+        (
+            "Correction Fluid",
+            "490590",
+            "Nos",
+            20,
+            "GST 18% - RT",
+        ),  # Chemical products - 18%
+        ("Glue Stick", "490599", "Nos", 18, "GST 18% - RT"),  # Chemical products - 18%
+        ("Scissors Office", "490700", "Nos", 65, "GST 12% - RT"),
+        (
+            "Calculator Desktop",
+            "490900",
+            "Nos",
+            450,
+            "GST 18% - RT",
+        ),  # Electronic calculator - 18%
     ]
 
     items = []
 
     # Create electronics items
-    for name, hsn, uom, rate in electronics_items:
+    for name, hsn, uom, rate, tax_template in electronics_items:
         item_code = name.replace(" ", "_").upper()
         item = {
             "doctype": "Item",
@@ -589,11 +607,17 @@ def _create_items():
             "gst_hsn_code": hsn,
             "valuation_rate": rate,
             "standard_rate": rate,
+            "taxes": [
+                {
+                    "item_tax_template": tax_template,
+                    "tax_category": "",
+                }
+            ],
         }
         items.append(item)
 
     # Create stationery items
-    for name, hsn, uom, rate in stationery_items:
+    for name, hsn, uom, rate, tax_template in stationery_items:
         item_code = name.replace(" ", "_").upper()
         item = {
             "doctype": "Item",
@@ -606,6 +630,12 @@ def _create_items():
             "gst_hsn_code": hsn,
             "valuation_rate": rate,
             "standard_rate": rate,
+            "taxes": [
+                {
+                    "item_tax_template": tax_template,
+                    "tax_category": "",
+                }
+            ],
         }
         items.append(item)
 
