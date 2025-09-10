@@ -37,7 +37,7 @@ DEFAULT_COMPANY_CONFIG = {
     "domain": "Manufacturing",
     "chart_of_accounts": "Standard",
     "enable_perpetual_inventory": 0,
-    "gstin": "24ABGFR8461H1ZY",
+    "gstin": "24AUTPV8831F1ZZ",
     "gst_category": "Registered Regular",
 }
 
@@ -233,12 +233,11 @@ def _clear_demo_data():
 
 def _create_company(**kwargs):
     """Create demo company with specified GST category"""
-    if frappe.db.exists("Company", kwargs.get("company_name")):
-        return
-
-    company = frappe.get_doc({"doctype": "Company", **kwargs})
-    company.insert(ignore_permissions=True)
-    company_name = company.get("name")
+    company_name = kwargs.get("company_name")
+    if not frappe.db.exists("Company", kwargs.get("company_name")):
+        company = frappe.get_doc({"doctype": "Company", **kwargs})
+        company.insert(ignore_permissions=True)
+        company_name = company.get("name")
 
     # Create GST accounts and tax templates for the company
     try:
@@ -569,7 +568,6 @@ def _create_addresses(customers, suppliers, company):
     addresses.append(
         {
             "doctype": "Address",
-            "address_title": f"{company}-Billing",
             "address_type": "Billing",
             "address_line1": "Tech Park, Bandra Kurla Complex",
             "city": "Vadodara",
@@ -606,7 +604,6 @@ def _create_addresses(customers, suppliers, company):
         addresses.append(
             {
                 "doctype": "Address",
-                "address_title": f"{customer.get('name')}-Billing",
                 "address_type": "Billing",
                 "address_line1": f"Plot {i + 1}, Sector {i % 10 + 1}",
                 "city": f"City {i + 1}",
@@ -629,7 +626,6 @@ def _create_addresses(customers, suppliers, company):
         addresses.append(
             {
                 "doctype": "Address",
-                "address_title": f"{supplier.get('name')}-Billing",
                 "address_type": "Billing",
                 "address_line1": f"Industrial Area {i + 1}, Zone {i % 5 + 1}",
                 "city": f"Industrial City {i + 1}",
