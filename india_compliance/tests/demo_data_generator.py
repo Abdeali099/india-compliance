@@ -175,6 +175,10 @@ def create_frappe_verse_demo_data():
         future_months=FUTURE_MONTHS,
     )
 
+    # Create GST Invoice Management System demo data
+    print("🏛️ Creating GST Invoice Management System demo data...")
+    create_gst_invoice_management_demo_data()
+
     print("✅ Demo data creation completed successfully!")
     print("📊 Summary:")
     print(f"   - Companies: {len(companies)}")
@@ -190,6 +194,254 @@ def create_frappe_verse_demo_data():
     print("🎉 Ready for Frappe Verse - 25 demo!")
 
 
+def create_gst_invoice_management_demo_data():
+    """
+    Create demo data for GST Invoice Management System using Resilient Tech
+    """
+    import frappe
+
+    from india_compliance.gst_india.doctype.purchase_reconciliation_tool.test_purchase_reconciliation_tool import (
+        create_gst_inward_supply,
+    )
+    from india_compliance.gst_india.utils.tests import create_purchase_invoice
+
+    # Current date is September 10, 2025
+    current_period = "092025"
+    bill_date = "2025-09-05"
+    gen_date = "2025-09-08"
+
+    print(f"📋 Creating GST IMS document for {DEFAULT_COMPANY}...")
+
+    # Create or get existing GST Invoice Management System document
+    try:
+        if not frappe.db.exists(
+            "GST Invoice Management System", {"company": DEFAULT_COMPANY}
+        ):
+            gst_ims = frappe.get_doc(
+                {
+                    "doctype": "GST Invoice Management System",
+                    "company": DEFAULT_COMPANY,
+                    "company_gstin": DEFAULT_COMPANY_CONFIG["gstin"],
+                    "return_period": current_period,
+                }
+            )
+            gst_ims.insert(ignore_permissions=True)
+            print(f"✅ Created GST IMS document for {DEFAULT_COMPANY}")
+        else:
+            print(f"✅ GST IMS document already exists for {DEFAULT_COMPANY}")
+    except Exception as e:
+        print(
+            f"⚠️  GST Invoice Management System doctype may not be available: {str(e)}"
+        )
+        print(
+            "   Continuing with GST Inward Supply creation only..."
+        )  # Create GST Inward Supply demo records
+    print("📄 Creating GST Inward Supply records...")
+
+    inward_supply_data = [
+        {
+            "bill_no": "RT-GST-25-001",
+            "supplier_name": "TechGlobal Components Ltd",
+            "supplier_gstin": "09AAACC1206D5ZA",
+            "taxable_value": 50000.0,
+            "integrated_tax": 9000.0,
+            "central_tax": 0.0,
+            "state_tax": 0.0,
+            "previous_ims_action": "No Action",
+            "action": "Pending",
+            "items": [{"taxable_value": 50000.0, "rate": 18, "igst": 9000.0}],
+            "document_value": 59000.0,
+        },
+        {
+            "bill_no": "RT-GST-25-002",
+            "supplier_name": "Smart Electronics Pvt Ltd",
+            "supplier_gstin": "27AAACC1206D1ZG",
+            "taxable_value": 75000.0,
+            "integrated_tax": 0.0,
+            "central_tax": 6750.0,
+            "state_tax": 6750.0,
+            "previous_ims_action": "Rejected",
+            "action": "No Action",
+            "previous_action": "Pending",
+            "items": [
+                {"taxable_value": 75000.0, "rate": 18, "cgst": 6750.0, "sgst": 6750.0}
+            ],
+            "document_value": 88500.0,
+        },
+        {
+            "bill_no": "RT-GST-25-003",
+            "supplier_name": "Digital Supplies Co",
+            "supplier_gstin": "30AAACC1206D2ZS",
+            "taxable_value": 25000.0,
+            "integrated_tax": 4500.0,
+            "central_tax": 0.0,
+            "state_tax": 0.0,
+            "previous_ims_action": "Accepted",
+            "action": "No Action",
+            "previous_action": "Pending",
+            "items": [{"taxable_value": 25000.0, "rate": 18, "igst": 4500.0}],
+            "document_value": 29500.0,
+        },
+        {
+            "bill_no": "RT-GST-25-004",
+            "supplier_name": "Metro Office Products",
+            "supplier_gstin": "06AAACC1206D2ZJ",
+            "taxable_value": 30000.0,
+            "integrated_tax": 5400.0,
+            "central_tax": 0.0,
+            "state_tax": 0.0,
+            "previous_ims_action": "No Action",
+            "action": "Pending",
+            "items": [{"taxable_value": 30000.0, "rate": 18, "igst": 5400.0}],
+            "document_value": 35400.0,
+        },
+        {
+            "bill_no": "RT-GST-25-005",
+            "supplier_name": "Universal Stationery Hub",
+            "supplier_gstin": "02AAACC1206D1ZS",
+            "taxable_value": 15000.0,
+            "integrated_tax": 0.0,
+            "central_tax": 1350.0,
+            "state_tax": 1350.0,
+            "previous_ims_action": "No Action",
+            "action": "Pending",
+            "items": [
+                {"taxable_value": 15000.0, "rate": 18, "cgst": 1350.0, "sgst": 1350.0}
+            ],
+            "document_value": 17700.0,
+        },
+    ]
+
+    default_args = {
+        "company": DEFAULT_COMPANY,
+        "company_gstin": DEFAULT_COMPANY_CONFIG["gstin"],
+        "bill_date": bill_date,
+        "return_period_2b": current_period,
+        "gen_date_2b": gen_date,
+        "classification": "B2B",
+        "doc_type": "Invoice",
+        "supply_type": "Regular",
+        "place_of_supply": "24-Gujarat",
+        "itc_availability": "Yes",
+    }
+
+    created_supplies = []
+    for supply_data in inward_supply_data:
+        try:
+            # Check if already exists
+            if not frappe.db.exists(
+                "GST Inward Supply", {"bill_no": supply_data["bill_no"]}
+            ):
+                create_gst_inward_supply(**default_args, **supply_data)
+                created_supplies.append(supply_data["bill_no"])
+                print(f"  ✅ Created inward supply: {supply_data['bill_no']}")
+            else:
+                print(f"  ℹ️  Inward supply already exists: {supply_data['bill_no']}")
+        except Exception as e:
+            print(
+                f"  ❌ Error creating inward supply {supply_data['bill_no']}: {str(e)}"
+            )
+
+    # Create matching Purchase Invoices for some of the inward supplies
+    print("📑 Creating matching Purchase Invoices...")
+
+    purchase_invoice_data = [
+        {
+            "bill_no": "RT-GST-25-001",
+            "supplier": "TechGlobal Components Ltd",
+            "supplier_gstin": "09AAACC1206D5ZA",
+            "items": [
+                {
+                    "item_code": "LAPTOP_DELL_INSPIRON",
+                    "qty": 1,
+                    "rate": 50000,
+                }
+            ],
+        },
+        {
+            "bill_no": "RT-GST-25-003",
+            "supplier": "Digital Supplies Co",
+            "supplier_gstin": "30AAACC1206D2ZS",
+            "items": [
+                {
+                    "item_code": "A4_COPY_PAPER_500_SHEETS",
+                    "qty": 100,
+                    "rate": 250,
+                }
+            ],
+        },
+        {
+            "bill_no": "RT-GST-25-005",
+            "supplier": "Universal Stationery Hub",
+            "supplier_gstin": "02AAACC1206D1ZS",
+            "items": [
+                {
+                    "item_code": "BALLPOINT_PEN_BLUE",
+                    "qty": 1500,
+                    "rate": 10,
+                }
+            ],
+        },
+    ]
+
+    created_invoices = []
+    for invoice_data in purchase_invoice_data:
+        try:
+            # Check if supplier exists, if not use a test supplier
+            if not frappe.db.exists("Supplier", invoice_data["supplier"]):
+                invoice_data["supplier"] = "_Test Registered Supplier"
+                invoice_data["supplier_gstin"] = "24AABCR6898M1ZN"
+
+            # Check if items exist, if not use test item
+            for item in invoice_data["items"]:
+                if not frappe.db.exists("Item", item["item_code"]):
+                    item["item_code"] = "_Test Trading Goods 1"
+
+            pinv = create_purchase_invoice(
+                company=DEFAULT_COMPANY, bill_date=bill_date, **invoice_data
+            )
+            created_invoices.append(pinv.name)
+            print(f"  ✅ Created purchase invoice: {invoice_data['bill_no']}")
+        except Exception as e:
+            print(
+                f"  ❌ Error creating purchase invoice {invoice_data['bill_no']}: {str(e)}"
+            )
+
+    print("✅ GST Invoice Management System demo data creation completed!")
+    print("📊 GST IMS Demo Summary:")
+    print(f"   - GST Inward Supplies: {len(created_supplies)}")
+    print(f"   - Matching Purchase Invoices: {len(created_invoices)}")
+    print(f"   - Return Period: {current_period}")
+    print(f"   - Company: {DEFAULT_COMPANY}")
+    print(f"   - Company GSTIN: {DEFAULT_COMPANY_CONFIG['gstin']}")
+    print("🎯 Ready for GST Invoice Management System demo!")
+
+
+def create_standalone_gst_ims_demo():
+    """
+    Standalone function to create only GST Invoice Management System demo data
+    Can be called independently without creating the full demo dataset.
+
+    Usage:
+        from india_compliance.tests.demo_data_generator import create_standalone_gst_ims_demo
+        create_standalone_gst_ims_demo()
+    """
+    import frappe
+
+    print("🏛️ Creating standalone GST Invoice Management System demo data...")
+
+    # Ensure Resilient Tech company exists
+    if not frappe.db.exists("Company", DEFAULT_COMPANY):
+        print(f"⚠️  Company '{DEFAULT_COMPANY}' does not exist. Creating it first...")
+        _create_company(**DEFAULT_COMPANY_CONFIG)
+        _set_default_company(DEFAULT_COMPANY)
+
+    # Create GST IMS demo data
+    create_gst_invoice_management_demo_data()
+
+    print("✅ Standalone GST Invoice Management System demo data created successfully!")
+
+
 def _clear_demo_data():
     """Remove existing demo data to start fresh"""
     doctypes_to_clear = [
@@ -200,6 +452,8 @@ def _clear_demo_data():
         "Supplier",
         "Address",
         "Company",
+        "GST Inward Supply",
+        "GST Invoice Management System",
     ]
 
     for doctype in doctypes_to_clear:
@@ -215,6 +469,14 @@ def _clear_demo_data():
                 ["item_name", "like", "%Laptop%"],
                 ["item_name", "like", "%Pen%"],
                 ["item_name", "like", "%Phone%"],
+            ]
+        elif doctype == "GST Inward Supply":
+            demo_filters = [
+                ["bill_no", "like", "RT-GST-%"],
+            ]
+        elif doctype == "GST Invoice Management System":
+            demo_filters = [
+                ["company", "=", DEFAULT_COMPANY],
             ]
 
         if demo_filters:
